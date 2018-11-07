@@ -1,27 +1,50 @@
 import psycopg2
 from config import DB_CONNECTION_STRING
-import json
-from pprint import pprint
-import random
+import csv
+import pandas as pd
 
-# Setup database connection
-connection = psycopg2.connect(DB_CONNECTION_STRING)
-client = connection.cursor()
+def song_id_to_song_name(id_string):
+    if id_string == '0':
+        return "Forest"
+    elif id_string == '1':
+        return "Harsh"
+    elif id_string == '2':
+        return "Street"
+    else:
+        return ""
 
-# Run query to get responses
-NAME = 0
-RESULT = 1
-client.execute("SELECT name, result FROM results;")
 
-# Commit the transaction
-connection.commit()
+def get_results_dataframe():
+    # Setup database connection
+    connection = psycopg2.connect(DB_CONNECTION_STRING)
+    client = connection.cursor()
 
-# Get the results
-res = client.fetchall()
+    # Run query to get responses
+    NAME = 0
+    RESULT = 1
+    client.execute("SELECT name, result FROM results;")
 
-# Format
-results = {}
-for row in res:
-        results[row[NAME]] = row[RESULT]
+    # Commit the transaction
+    connection.commit()
 
-pprint(results)
+    # Get the results
+    res = client.fetchall()
+
+    # Format
+    results = {}
+
+    with open('results.csv', 'w', newline='') as file:
+        labels = ["ID", "Song", "Start", "End", "Label"]
+        writer = csv.DictWriter(file, fieldnames=labels)
+
+        # Column labels
+        writer.writeheader()
+
+        for row in res:
+            id = row[NAME]
+            for song in row[RESULT]:
+                song_name = song_id_to_song_name(song)
+                for region in row[RESULT][song]:
+                    writer.writerow(dict(zip(labels, [id, song_name, region["start"], region["end"], region["label"]])))
+
+    return pd.read_csv('results.csv')
