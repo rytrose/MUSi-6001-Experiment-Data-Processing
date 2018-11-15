@@ -34,7 +34,7 @@ def get_results_dataframe():
     results = {}
 
     with open('results.csv', 'w', newline='') as file:
-        labels = ["ID", "Song", "Start", "End", "Label"]
+        labels = ["ID", "Musician Type", "Song", "Start", "End", "Label"]
         writer = csv.DictWriter(file, fieldnames=labels)
 
         # Column labels
@@ -42,9 +42,13 @@ def get_results_dataframe():
 
         for row in res:
             id = row[NAME]
+            if id in ["903337531", "903165064", "903339825", "902946528"]:
+                musician_type = "Percussionist"
+            else:
+                musician_type = "Instrumentalist"
             for song in row[RESULT]:
                 song_name = song_id_to_song_name(song)
                 for region in row[RESULT][song]:
-                    writer.writerow(dict(zip(labels, [id, song_name, region["start"], region["end"], region["label"]])))
+                    writer.writerow(dict(zip(labels, [id, musician_type, song_name, region["start"], region["end"], region["label"]])))
 
     return pd.read_csv('results.csv')
